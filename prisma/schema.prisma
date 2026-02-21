@@ -1,0 +1,91 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Repository {
+  id           String   @id @default(cuid())
+  githubId     Int      @unique
+  name         String
+  fullName     String   @unique
+  description  String?
+  defaultBranch String  @default("main")
+  healthScore  Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  pullRequests PullRequest[]
+  healthChecks RepoHealthCheck[]
+}
+
+model PullRequest {
+  id            String   @id @default(cuid())
+  prNumber      Int
+  title         String
+  author        String
+  repositoryId  String
+  status        String   @default("open") // open | closed | merged
+  riskLevel     String?  // low | medium | high
+  riskScore     Float?   // 0-100
+  aiConfidence  Float?   // 0-1
+  filesChanged  Int      @default(0)
+  additions     Int      @default(0)
+  deletions     Int      @default(0)
+  persona       String   @default("default") // default | security | cto | performance | roast
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  repository    Repository @relation(fields: [repositoryId], references: [id])
+  issues        PRIssue[]
+  reviews       PRReview[]
+
+  @@unique([repositoryId, prNumber])
+}
+
+model PRIssue {
+  id           String   @id @default(cuid())
+  pullRequestId String
+  severity     String   // critical | high | medium | low | info
+  category     String   // security | performance | logic | style | maintainability
+  title        String
+  description  String
+  filePath     String?
+  lineNumber   Int?
+  suggestion   String?
+  ruleId       String?
+  createdAt    DateTime @default(now())
+
+  pullRequest  PullRequest @relation(fields: [pullRequestId], references: [id])
+}
+
+model PRReview {
+  id            String   @id @default(cuid())
+  pullRequestId String
+  summary       String
+  persona       String
+  postedToGithub Boolean @default(false)
+  githubCommentId Int?
+  createdAt     DateTime @default(now())
+
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
+}
+
+model RepoHealthCheck {
+  id             String   @id @default(cuid())
+  repositoryId   String
+  overallScore   Float
+  codeQuality    Float
+  securityRisk   Float
+  maintainability Float
+  testCoverage   Float
+  performanceRisk Float
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  repository     Repository @relation(fields: [repositoryId], references: [id])
+}
