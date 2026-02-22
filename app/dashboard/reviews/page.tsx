@@ -1,18 +1,28 @@
 // app/dashboard/reviews/page.tsx
 import { prisma } from "@/lib/db";
+import {
+  GitPullRequest,
+  AlertTriangle,
+  Clock,
+  FileCode,
+  Plus,
+  Minus,
+  Brain,
+  Filter,
+} from "lucide-react";
 
-const severityColors: Record<string, string> = {
-  critical: "text-red-400",
-  high: "text-orange-400",
-  medium: "text-yellow-400",
-  low: "text-blue-400",
-  info: "text-gray-400",
+const severityConfig: Record<string, { color: string; bg: string }> = {
+  critical: { color: "text-red-400", bg: "bg-red-500/10" },
+  high: { color: "text-orange-400", bg: "bg-orange-500/10" },
+  medium: { color: "text-amber-400", bg: "bg-amber-500/10" },
+  low: { color: "text-blue-400", bg: "bg-blue-500/10" },
+  info: { color: "text-gray-400", bg: "bg-gray-500/10" },
 };
 
-const riskBadge: Record<string, string> = {
-  low: "bg-green-900/40 text-green-400 border border-green-800",
-  medium: "bg-yellow-900/40 text-yellow-400 border border-yellow-800",
-  high: "bg-red-900/40 text-red-400 border border-red-800",
+const riskBadgeClass: Record<string, string> = {
+  low: "badge-risk-low",
+  medium: "badge-risk-medium",
+  high: "badge-risk-high",
 };
 
 async function getReviews() {
@@ -24,7 +34,7 @@ async function getReviews() {
         repository: { select: { fullName: true } },
         issues: { select: { severity: true, category: true, title: true } },
         reviews: {
-          select: { summary: true },
+          select: { summary: true, persona: true },
           orderBy: { createdAt: "desc" },
           take: 1,
         },
@@ -39,15 +49,33 @@ export default async function ReviewsPage() {
   const prs = await getReviews();
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">PR Reviews</h1>
-        <p className="text-gray-500 text-sm mt-1">{prs.length} pull requests reviewed</p>
+    <div className="space-y-6">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">PR Reviews</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {prs.length} pull request{prs.length !== 1 ? "s" : ""} analyzed
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="btn-secondary text-sm !px-4 !py-2.5 flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            Filter
+          </button>
+        </div>
       </div>
 
+      {/* ── Reviews List ── */}
       {prs.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-10 text-center text-gray-500">
-          No reviews yet. Set up your webhook or use the Analyze tool.
+        <div className="glass-card rounded-2xl p-16 text-center">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-brand-500/10 to-brand-600/5 flex items-center justify-center">
+            <GitPullRequest className="w-8 h-8 text-brand-400/60" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-300 mb-2">No reviews yet</h3>
+          <p className="text-sm text-gray-500 max-w-md mx-auto">
+            Set up your GitHub webhook or use the manual analyzer to start reviewing PRs.
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -60,41 +88,80 @@ export default async function ReviewsPage() {
             return (
               <div
                 key={pr.id}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors"
+                className="glass-card-hover rounded-2xl p-6 group"
               >
-                <div className="flex items-start justify-between gap-4">
+                {/* Top row */}
+                <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-gray-500 text-sm">#{pr.prNumber}</span>
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <span className="text-xs font-mono text-gray-500 bg-white/[0.03] px-2 py-1 rounded-lg">
+                        #{pr.prNumber}
+                      </span>
                       {pr.riskLevel && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${riskBadge[pr.riskLevel]}`}>
+                        <span className={riskBadgeClass[pr.riskLevel]}>
                           {pr.riskLevel} risk
                         </span>
                       )}
-                      <span className="text-gray-600 text-xs">
-                        Score: {pr.riskScore?.toFixed(0) ?? "—"}/100
-                      </span>
+                      {pr.riskScore != null && (
+                        <span className="text-[11px] text-gray-600 font-mono">
+                          Score: {pr.riskScore.toFixed(0)}/100
+                        </span>
+                      )}
+                      {pr.persona !== "default" && (
+                        <span className="badge-info text-[11px]">
+                          {pr.persona}
+                        </span>
+                      )}
                     </div>
-                    <h3 className="font-semibold truncate">{pr.title}</h3>
-                    <p className="text-gray-500 text-xs mt-1">
-                      {pr.repository.fullName} · by {pr.author} ·{" "}
-                      {new Date(pr.createdAt).toLocaleDateString()}
-                    </p>
+                    <h3 className="font-semibold text-white text-lg truncate group-hover:text-brand-300 transition-colors">
+                      {pr.title}
+                    </h3>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      <span className="font-mono">{pr.repository.fullName}</span>
+                      <span className="text-gray-700">·</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {new Date(pr.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                      <span className="text-gray-700">·</span>
+                      <span>by {pr.author}</span>
+                    </div>
                   </div>
 
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-sm font-medium">{pr.issues.length} issues</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      +{pr.additions} / -{pr.deletions}
+                  {/* Stats */}
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-white">{pr.issues.length}</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider">Issues</div>
+                    </div>
+                    <div className="w-px h-8 bg-white/[0.06]" />
+                    <div className="flex items-center gap-2 text-xs font-mono">
+                      <span className="text-emerald-400 flex items-center gap-0.5">
+                        <Plus className="w-3 h-3" />
+                        {pr.additions}
+                      </span>
+                      <span className="text-red-400 flex items-center gap-0.5">
+                        <Minus className="w-3 h-3" />
+                        {pr.deletions}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Severity breakdown */}
+                {/* Severity badges */}
                 {Object.keys(bySeverity).length > 0 && (
-                  <div className="flex gap-3 mt-3 flex-wrap">
+                  <div className="flex gap-2 flex-wrap mb-4">
                     {Object.entries(bySeverity).map(([sev, count]) => (
-                      <span key={sev} className={`text-xs ${severityColors[sev]}`}>
+                      <span
+                        key={sev}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${severityConfig[sev]?.color || "text-gray-400"
+                          } ${severityConfig[sev]?.bg || "bg-gray-500/10"}`}
+                      >
+                        <AlertTriangle className="w-3 h-3" />
                         {count} {sev}
                       </span>
                     ))}
@@ -103,9 +170,14 @@ export default async function ReviewsPage() {
 
                 {/* AI Summary */}
                 {pr.reviews[0]?.summary && (
-                  <p className="mt-3 text-sm text-gray-400 line-clamp-2 border-t border-gray-800 pt-3">
-                    {pr.reviews[0].summary}
-                  </p>
+                  <div className="border-t border-white/[0.04] pt-4 flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500/15 to-brand-600/5 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Brain className="w-3.5 h-3.5 text-brand-400" />
+                    </div>
+                    <p className="text-sm text-gray-400 leading-relaxed line-clamp-2">
+                      {pr.reviews[0].summary}
+                    </p>
+                  </div>
                 )}
               </div>
             );
