@@ -1,4 +1,3 @@
-// app/dashboard/reviews/page.tsx
 import { prisma } from "@/lib/db";
 import {
   GitPullRequest,

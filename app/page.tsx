@@ -1,4 +1,3 @@
-// app/page.tsx
 import Link from "next/link";
 import { Shield, Zap, BarChart3, Users, GitPullRequest, Brain, Lock, Activity, ArrowRight, Star, Github, ChevronRight, Sparkles } from "lucide-react";
 

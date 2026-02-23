@@ -1,4 +1,3 @@
-// lib/rules/scoring.ts
 import { RuleIssue } from "./engine";
 
 export interface RiskScore {

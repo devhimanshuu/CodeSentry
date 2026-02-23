@@ -1,8 +1,8 @@
-// app/dashboard/layout.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   GitPullRequest,
@@ -15,11 +15,14 @@ import {
   ExternalLink,
   Bell,
   Search,
+  Github,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/repos", label: "Repositories", icon: Github },
   { href: "/dashboard/reviews", label: "PR Reviews", icon: GitPullRequest },
   { href: "/dashboard/health", label: "Repo Health", icon: HeartPulse },
   { href: "/dashboard/analyze", label: "Analyze PR", icon: Zap },
@@ -29,8 +32,8 @@ function SidebarIcon({ icon: Icon, active }: { icon: React.ElementType; active?:
   return (
     <div
       className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${active
-          ? "bg-brand-500/15 text-brand-400 shadow-glow-sm"
-          : "text-gray-500 group-hover:text-gray-300"
+        ? "bg-brand-500/15 text-brand-400 shadow-glow-sm"
+        : "text-gray-500 group-hover:text-gray-300"
         }`}
     >
       <Icon className="w-[18px] h-[18px]" />
@@ -39,8 +42,10 @@ function SidebarIcon({ icon: Icon, active }: { icon: React.ElementType; active?:
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -104,8 +109,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${active
-                    ? "text-white bg-brand-500/10 border border-brand-500/15"
-                    : "text-gray-500 hover:text-gray-200 hover:bg-white/[0.03] border border-transparent"
+                  ? "text-white bg-brand-500/10 border border-brand-500/15"
+                  : "text-gray-500 hover:text-gray-200 hover:bg-white/[0.03] border border-transparent"
                   } ${collapsed ? "justify-center" : ""}`}
               >
                 {/* Active indicator */}
@@ -206,9 +211,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <ExternalLink className="w-4 h-4" />
             </a>
 
-            {/* Avatar */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-purple flex items-center justify-center text-xs font-bold text-white">
-              CS
+            {/* Avatar & Profile */}
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-purple overflow-hidden flex items-center justify-center text-xs font-bold text-white border border-white/10 hover:border-white/20 transition-all"
+              >
+                {session?.user?.image ? (
+                  <img src={session.user.image} alt={session.user.name || ""} className="w-full h-full object-cover" />
+                ) : (
+                  session?.user?.name?.substring(0, 2).toUpperCase() || "CS"
+                )}
+              </button>
+
+              {showProfileMenu && (
+                <div className="absolute top-full right-0 mt-2 w-48 glass-card border-white/10 shadow-2xl z-50 py-1 animate-fade-in-up">
+                  <div className="px-4 py-3 border-b border-white/5">
+                    <p className="text-xs font-semibold text-white truncate">{session?.user?.name || "Guest"}</p>
+                    <p className="text-[10px] text-gray-500 truncate">{session?.user?.email || ""}</p>
+                  </div>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

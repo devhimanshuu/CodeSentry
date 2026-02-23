@@ -1,5 +1,4 @@
 "use client";
-// app/dashboard/analyze/page.tsx
 import { useState } from "react";
 import {
   Zap,
@@ -203,8 +202,8 @@ export default function AnalyzePage() {
                   key={p.id}
                   onClick={() => setPersona(p.id)}
                   className={`group relative p-4 rounded-xl border text-left transition-all duration-300 overflow-hidden ${selected
-                      ? `${p.color} border-current/20`
-                      : "border-white/[0.06] hover:border-white/10 bg-white/[0.02]"
+                    ? `${p.color} border-current/20`
+                    : "border-white/[0.06] hover:border-white/10 bg-white/[0.02]"
                     }`}
                 >
                   {/* Active glow */}
@@ -296,10 +295,10 @@ export default function AnalyzePage() {
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${result.risk.level === "high"
-                    ? "from-red-500/20 to-red-600/5"
-                    : result.risk.level === "medium"
-                      ? "from-amber-500/20 to-amber-600/5"
-                      : "from-emerald-500/20 to-emerald-600/5"
+                  ? "from-red-500/20 to-red-600/5"
+                  : result.risk.level === "medium"
+                    ? "from-amber-500/20 to-amber-600/5"
+                    : "from-emerald-500/20 to-emerald-600/5"
                   } flex items-center justify-center`}
                 >
                   <Shield className={`w-5 h-5 ${riskColor[result.risk.level]}`} />

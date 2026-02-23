@@ -9,11 +9,13 @@ export const metadata: Metadata = {
   keywords: ["AI code review", "PR analysis", "risk scoring", "repository health", "engineering intelligence"],
 };
 
+import { Providers } from "@/components/Providers";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
       <body className="bg-[#07071a] text-gray-100 min-h-screen noise-overlay">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
